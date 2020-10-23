@@ -44,6 +44,19 @@ func TestLexPageFileValid(t *testing.T) {
 		{EOF, ""},
 	}
 
+	input5 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\ntext:foo:bar=foo\n"
+	items5 := []PageFileLexItem{
+		{Key, "version"},
+		{Value, "pmwiki-2.1.0 urlencoded=1"},
+		{Key, "text"},
+		{Value, "text"},
+		{Key, "text"},
+		{KeyOpt, "foo"},
+		{KeyOpt, "bar"},
+		{Value, "foo"},
+		{EOF, ""},
+	}
+
 	tests := []struct {
 		name  string
 		input string
@@ -53,6 +66,7 @@ func TestLexPageFileValid(t *testing.T) {
 		{"short", input2, items2},
 		{"multiline", input3, items3},
 		{"key options", input4, items4},
+		{"multiple key options", input5, items5},
 	}
 
 	for _, test := range tests {

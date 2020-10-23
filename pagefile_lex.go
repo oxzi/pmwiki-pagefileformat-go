@@ -73,53 +73,46 @@ func pageFileLexBegin(lexer *pageFileLexer) pageFileLexStateFunc {
 	} else if err == io.EOF {
 		return lexer.eof()
 	} else {
-		return lexer.errorf("pageFileLexBegin: %v", err)
+		return lexer.errorf("%v", err)
 	}
 }
 
-// pageFileLexKey extracts a Key.
-func pageFileLexKey(lexer *pageFileLexer) pageFileLexStateFunc {
-	var field string
-	for {
-		r, err := lexer.next()
-		if err != nil {
-			return lexer.errorf("pageFileLexKey: %v", err)
-		}
+var (
+	// pageFileLexKey extracts a Key.
+	pageFileLexKey pageFileLexStateFunc
 
-		switch r {
-		case ':':
-			return lexer.emit(Key, field, pageFileLexKeyOpt)
+	// pageFileLexKeyOpt extracts a Key's KeyOpt.
+	pageFileLexKeyOpt pageFileLexStateFunc
+)
 
-		case '=':
-			return lexer.emit(Key, field, pageFileLexVal)
-
-		default:
-			if unicode.IsSpace(r) {
-				return lexer.errorf("pageFileLexKey: unexpected white space")
-			}
-			field += string(r)
-		}
-	}
+func init() {
+	pageFileLexKey = pageFileLexKeyOrKeyOptGenerator(Key)
+	pageFileLexKeyOpt = pageFileLexKeyOrKeyOptGenerator(KeyOpt)
 }
 
-// pageFileLexKeyOpt extracts a Key's KeyOpt.
-func pageFileLexKeyOpt(lexer *pageFileLexer) pageFileLexStateFunc {
-	var field string
-	for {
-		r, err := lexer.next()
-		if err != nil {
-			return lexer.errorf("pageFileLexKeyOpt: %v", err)
-		}
-
-		switch r {
-		case '=':
-			return lexer.emit(KeyOpt, field, pageFileLexVal)
-
-		default:
-			if unicode.IsSpace(r) {
-				return lexer.errorf("pageFileLexKeyOpt: unexpected white space")
+// pageFileLexKeyOrKeyOptGenerator generates pageFileLexKey and pageFileLexKeyOpt.
+func pageFileLexKeyOrKeyOptGenerator(t PageFileLexType) pageFileLexStateFunc {
+	return func(lexer *pageFileLexer) pageFileLexStateFunc {
+		var field string
+		for {
+			r, err := lexer.next()
+			if err != nil {
+				return lexer.errorf("%v", err)
 			}
-			field += string(r)
+
+			switch r {
+			case ':':
+				return lexer.emit(t, field, pageFileLexKeyOpt)
+
+			case '=':
+				return lexer.emit(t, field, pageFileLexVal)
+
+			default:
+				if unicode.IsSpace(r) {
+					return lexer.errorf("unexpected white space")
+				}
+				field += string(r)
+			}
 		}
 	}
 }
@@ -130,7 +123,7 @@ func pageFileLexVal(lexer *pageFileLexer) pageFileLexStateFunc {
 	for {
 		r, err := lexer.next()
 		if err != nil {
-			return lexer.errorf("pageFileLexVal: %v", err)
+			return lexer.errorf("%v", err)
 		}
 
 		if r == '\n' {
