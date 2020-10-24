@@ -22,7 +22,7 @@ func TestParsePageFileValid(t *testing.T) {
 			pf.Name == "Main.Test" &&
 			pf.Rev == 42 &&
 			pf.Time.Equal(time.Unix(1603541891, 0).UTC()) &&
-			pf.Text == "%0ahello%0aworld"
+			pf.Text == "\nhello\nworld"
 	}
 
 	input4 := "version=pmwiki-2.1.0 urlencoded=1\nrandom=data\n"
@@ -41,7 +41,7 @@ func TestParsePageFileValid(t *testing.T) {
 	}
 
 	input6 := "version=pmwiki-2.1.0 urlencoded=1\nauthor=user\nhost=2001:db8::1\nname=Main.Test\nrev=42\ntime=1603541891\ntext=%0ahello%0aworld\n" +
-		"author:10=foo\nhost:10=::1\ndiff:10:5:=diff b\nauthor:5=bar\nhost:5=::2\ndiff:5:3:=diff a\n"
+		"author:10=foo\nhost:10=::1\ndiff:10:5:=diff%3cb\nauthor:5=bar\nhost:5=::2\ndiff:5:3:=diff%25a\n"
 	check6 := func(pf PageFile) bool {
 		mainCheck := pf.Version == "pmwiki-2.1.0 urlencoded=1" &&
 			pf.Author == "user" &&
@@ -49,7 +49,7 @@ func TestParsePageFileValid(t *testing.T) {
 			pf.Name == "Main.Test" &&
 			pf.Rev == 42 &&
 			pf.Time.Equal(time.Unix(1603541891, 0).UTC()) &&
-			pf.Text == "%0ahello%0aworld"
+			pf.Text == "\nhello\nworld"
 		if !mainCheck {
 			return false
 		}
@@ -67,7 +67,7 @@ func TestParsePageFileValid(t *testing.T) {
 			chk := pfr.Author == "foo" &&
 				pfr.Host.Equal(net.ParseIP("::1")) &&
 				pfr.DiffAgainst.Equal(pfrA) &&
-				pfr.Diff == "diff b"
+				pfr.Diff == "diff<b"
 			if !chk {
 				return false
 			}
@@ -79,7 +79,7 @@ func TestParsePageFileValid(t *testing.T) {
 			return pfr.Author == "bar" &&
 				pfr.Host.Equal(net.ParseIP("::2")) &&
 				pfr.DiffAgainst.Equal(time.Unix(3, 0).UTC()) &&
-				pfr.Diff == "diff a"
+				pfr.Diff == "diff%a"
 		}
 	}
 
@@ -88,6 +88,12 @@ func TestParsePageFileValid(t *testing.T) {
 
 	input8 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\nfoo:23=buz\n"
 	check8 := func(pf PageFile) bool { return len(pf.Revs) == 0 }
+
+	input9 := "version=pmwiki-2.1.0 urlencoded=1\ntext=foo%0abar\n"
+	check9 := func(pf PageFile) bool { return pf.Text == "foo\nbar" }
+
+	input10 := "version=pmwiki-2.1.0\ntext=foo%0abar\n"
+	check10 := func(pf PageFile) bool { return pf.Text == "foo%0abar" }
 
 	tests := []struct {
 		name  string
@@ -102,6 +108,8 @@ func TestParsePageFileValid(t *testing.T) {
 		{"two revisions", input6, check6},
 		{"ignore non-timestamp keyopts", input7, check7},
 		{"ignore non supported revision key", input8, check8},
+		{"check URL encoding", input9, check9},
+		{"check disabled URL encoding", input10, check10},
 	}
 
 	for _, test := range tests {

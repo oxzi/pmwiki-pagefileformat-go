@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -97,7 +98,14 @@ func pageFileParseFields(parser *pageFileParser) pageFileParseStateFunc {
 				opts = append(opts, item.v)
 
 			case Value:
-				value = item.v
+				if parser.urlencoded {
+					if value, err = url.QueryUnescape(strings.ReplaceAll(item.v, "+", "%2b")); err != nil {
+						return parser.errorf("URL decoding value errored, %w", err)
+					}
+				} else {
+					value = item.v
+				}
+
 				break itemTokenLoop
 
 			default:
