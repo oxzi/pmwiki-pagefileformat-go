@@ -184,6 +184,12 @@ func pageFileParseMainItem(parser *pageFileParser, key, value string) error {
 
 // pageFileParseRev parses items with KeyOpts, which are PageFileRevisions in this use case.
 func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) error {
+	// There are some duplicate empty "diff" items in my dataset. I'm not quite sure why PmWiki creates those, but as
+	// empty value entries are useless, we are just going to skip those.
+	if value == "" {
+		return nil
+	}
+
 	// Items in our interest are starting with the time as the first KeyOpt. Other items will be ignored.
 	unixInt, unixErr := strconv.ParseInt(opts[0], 10, 64)
 	if unixErr != nil {
