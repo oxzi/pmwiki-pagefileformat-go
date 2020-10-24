@@ -108,7 +108,7 @@ func pageFileParseFields(parser *pageFileParser) pageFileParseStateFunc {
 		if len(opts) == 0 {
 			err = pageFileParseMainItem(parser, key, value)
 		} else {
-			// TODO
+			err = pageFileParseRev(parser, key, value, opts)
 		}
 		if err != nil {
 			return parser.errorf("parsing item errored, %w", err)
@@ -171,6 +171,58 @@ func pageFileParseMainItem(parser *pageFileParser, key, value string) error {
 		// unknown / unsupported item
 	}
 
+	return nil
+}
+
+// pageFileParseRev parses items with KeyOpts, which are PageFileRevisions in this use case.
+func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) error {
+	// Items in our interest are starting with the time as the first KeyOpt. Other items will be ignored.
+	unixInt, unixErr := strconv.ParseInt(opts[0], 10, 64)
+	if unixErr != nil {
+		return nil
+	}
+
+	unix := time.Unix(unixInt, 0).UTC()
+	pfr := parser.pf.Revs[unix]
+
+	switch key {
+	case "author":
+		if pfr.Author != "" {
+			return fmt.Errorf("author field was already set")
+		}
+		pfr.Author = value
+
+	case "host":
+		if len(pfr.Host) != 0 {
+			return fmt.Errorf("host field was already set")
+		}
+		if host := net.ParseIP(value); host == nil {
+			return fmt.Errorf("parsing host %s errored", value)
+		} else {
+			pfr.Host = host
+		}
+
+	case "diff":
+		if pfr.DiffAgainst != (time.Time{}) || pfr.Diff != "" {
+			return fmt.Errorf("diff field was already set")
+		}
+		if len(opts) < 2 {
+			return fmt.Errorf("diff requires at least two keyopts")
+		}
+		if diffAgainstUnix, err := strconv.ParseInt(opts[1], 10, 64); err != nil {
+			return fmt.Errorf("time parsing errored, %w", err)
+		} else {
+			pfr.DiffAgainst = time.Unix(diffAgainstUnix, 0).UTC()
+		}
+		pfr.Diff = value
+
+	default:
+		// unknown / unsupported item
+		// return, because we would save the current revision otherwise
+		return nil
+	}
+
+	parser.pf.Revs[unix] = pfr
 	return nil
 }
 
