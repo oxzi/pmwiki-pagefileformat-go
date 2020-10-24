@@ -8,12 +8,12 @@ import (
 
 func TestLexPageFileValid(t *testing.T) {
 	input1 := ""
-	items1 := []PageFileLexItem{
+	items1 := []pageFileLexItem{
 		{EOF, ""},
 	}
 
 	input2 := "version=pmwiki-2.1.0 urlencoded=1\ntext=Markup text\n"
-	items2 := []PageFileLexItem{
+	items2 := []pageFileLexItem{
 		{Key, "version"},
 		{Value, "pmwiki-2.1.0 urlencoded=1"},
 		{Key, "text"},
@@ -22,7 +22,7 @@ func TestLexPageFileValid(t *testing.T) {
 	}
 
 	input3 := "version=pmwiki-2.1.0 ordered=1 urlencoded=1\ntext=This is a line.%0aThis is another.\nctime=1142030000\n"
-	items3 := []PageFileLexItem{
+	items3 := []pageFileLexItem{
 		{Key, "version"},
 		{Value, "pmwiki-2.1.0 ordered=1 urlencoded=1"},
 		{Key, "text"},
@@ -33,7 +33,7 @@ func TestLexPageFileValid(t *testing.T) {
 	}
 
 	input4 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\ntext:foo=foo\n"
-	items4 := []PageFileLexItem{
+	items4 := []pageFileLexItem{
 		{Key, "version"},
 		{Value, "pmwiki-2.1.0 urlencoded=1"},
 		{Key, "text"},
@@ -45,7 +45,7 @@ func TestLexPageFileValid(t *testing.T) {
 	}
 
 	input5 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\ntext:foo:bar=foo\n"
-	items5 := []PageFileLexItem{
+	items5 := []pageFileLexItem{
 		{Key, "version"},
 		{Value, "pmwiki-2.1.0 urlencoded=1"},
 		{Key, "text"},
@@ -60,7 +60,7 @@ func TestLexPageFileValid(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		items []PageFileLexItem
+		items []pageFileLexItem
 	}{
 		{"eof", input1, items1},
 		{"short", input2, items2},
@@ -71,8 +71,8 @@ func TestLexPageFileValid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var items []PageFileLexItem
-			for item := range LexPageFile(strings.NewReader(test.input)) {
+			var items []pageFileLexItem
+			for item := range lexPageFile(strings.NewReader(test.input)) {
 				items = append(items, item)
 			}
 
@@ -108,8 +108,8 @@ func TestLexPageFileInvalid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			for item := range LexPageFile(strings.NewReader(test.input)) {
-				if item.T == Error {
+			for item := range lexPageFile(strings.NewReader(test.input)) {
+				if item.t == Error {
 					return
 				}
 			}

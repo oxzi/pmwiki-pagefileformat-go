@@ -7,11 +7,11 @@ import (
 	"unicode"
 )
 
-// PageFileLexType are the different tokens which might be extracted.
-type PageFileLexType int
+// pageFileLexType are the different tokens which might be extracted.
+type pageFileLexType int
 
 const (
-	_ PageFileLexType = iota
+	_ pageFileLexType = iota
 
 	// EOF is an internal io.EOF.
 	EOF
@@ -26,31 +26,10 @@ const (
 	Value
 )
 
-func (t PageFileLexType) String() string {
-	switch t {
-	case EOF:
-		return "eof"
-	case Error:
-		return "error"
-	case Key:
-		return "key"
-	case KeyOpt:
-		return "key_opt"
-	case Value:
-		return "value"
-	default:
-		panic("unknown type")
-	}
-}
-
-// PageFileLexItem is a tuple of a PageFileLexType with its value.
-type PageFileLexItem struct {
-	T PageFileLexType
-	V string
-}
-
-func (item PageFileLexItem) String() string {
-	return fmt.Sprintf("%v\t%s", item.T, item.V)
+// pageFileLexItem is a tuple of a pageFileLexType with its value.
+type pageFileLexItem struct {
+	t pageFileLexType
+	v string
 }
 
 // pageFileLexer is a lexer to tokenize PmWiki's PageFileFormat.
@@ -59,10 +38,10 @@ func (item PageFileLexItem) String() string {
 // <https://talks.golang.org/2011/lex.slide>. However, it operates on an io.Reader instead of a string.
 type pageFileLexer struct {
 	reader *bufio.Reader
-	items  chan PageFileLexItem
+	items  chan pageFileLexItem
 }
 
-// pageFileLexStateFunc is lexing until a pageFileLexer and returns its successive pageFileLexStateFunc.
+// pageFileLexStateFunc is lexing a pageFileLexer and returns its successive pageFileLexStateFunc.
 type pageFileLexStateFunc func(*pageFileLexer) pageFileLexStateFunc
 
 // pageFileLexBegin inspects a line's start and selects between an EOF or a Key.
@@ -86,12 +65,16 @@ var (
 )
 
 func init() {
+	// The two lexers for Key and KeyOpt are almost identical. Thus, the pageFileLexKeyOrKeyOptGenerator creates them.
+	// However, within the generator, the pageFileLexKeyOpt is referenced. This level of indirection is too much for the
+	// Go compiler. That's why this hacky hack is here.
+
 	pageFileLexKey = pageFileLexKeyOrKeyOptGenerator(Key)
 	pageFileLexKeyOpt = pageFileLexKeyOrKeyOptGenerator(KeyOpt)
 }
 
 // pageFileLexKeyOrKeyOptGenerator generates pageFileLexKey and pageFileLexKeyOpt.
-func pageFileLexKeyOrKeyOptGenerator(t PageFileLexType) pageFileLexStateFunc {
+func pageFileLexKeyOrKeyOptGenerator(t pageFileLexType) pageFileLexStateFunc {
 	return func(lexer *pageFileLexer) pageFileLexStateFunc {
 		var field string
 		for {
@@ -133,11 +116,11 @@ func pageFileLexVal(lexer *pageFileLexer) pageFileLexStateFunc {
 	}
 }
 
-// LexPageFile starts a lexical analysis for PmWiki's PageFileFormat. The tokens are sent to the channel.
-func LexPageFile(reader io.Reader) chan PageFileLexItem {
+// lexPageFile starts a lexical analysis for PmWiki's PageFileFormat. The tokens are sent to the channel.
+func lexPageFile(reader io.Reader) <-chan pageFileLexItem {
 	lexer := &pageFileLexer{
 		reader: bufio.NewReader(reader),
-		items:  make(chan PageFileLexItem),
+		items:  make(chan pageFileLexItem),
 	}
 	go lexer.run()
 
@@ -165,8 +148,8 @@ func (lexer *pageFileLexer) backup() {
 }
 
 // emit a token back and return the successive state.
-func (lexer *pageFileLexer) emit(t PageFileLexType, v string, succ pageFileLexStateFunc) pageFileLexStateFunc {
-	lexer.items <- PageFileLexItem{t, v}
+func (lexer *pageFileLexer) emit(t pageFileLexType, v string, succ pageFileLexStateFunc) pageFileLexStateFunc {
+	lexer.items <- pageFileLexItem{t, v}
 	return succ
 }
 
