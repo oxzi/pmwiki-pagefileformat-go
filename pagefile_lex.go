@@ -7,23 +7,23 @@ import (
 	"unicode"
 )
 
-// pageFileLexType are the different tokens which might be extracted.
+// pageFileLexType are the different tokens of a pageFileLexItem.
 type pageFileLexType int
 
 const (
 	_ pageFileLexType = iota
 
-	// EOF is an internal io.EOF.
-	EOF
-	// Error in case of an invalid state transition.
-	Error
+	// pageFileEOF is an internal io.EOF.
+	pageFileEOF
+	// pageFileError in case of an invalid state transition.
+	pageFileError
 
-	// Key name.
-	Key
-	// KeyOpt are additional options for the previous Key.
-	KeyOpt
-	// Value for the previous Key.
-	Value
+	// pageFileKey name.
+	pageFileKey
+	// pageFileKeyOpt are additional options for the previous pageFileKey.
+	pageFileKeyOpt
+	// pageFileValue for the previous pageFileKey.
+	pageFileValue
 )
 
 // pageFileLexItem is a tuple of a pageFileLexType with its value.
@@ -44,7 +44,7 @@ type pageFileLexer struct {
 // pageFileLexStateFunc is lexing a pageFileLexer and returns its successive pageFileLexStateFunc.
 type pageFileLexStateFunc func(*pageFileLexer) pageFileLexStateFunc
 
-// pageFileLexBegin inspects a line's start and selects between an EOF or a Key.
+// pageFileLexBegin inspects a line's start and selects between an pageFileEOF or a pageFileKey.
 func pageFileLexBegin(lexer *pageFileLexer) pageFileLexStateFunc {
 	if _, err := lexer.next(); err == nil {
 		lexer.backup()
@@ -57,20 +57,20 @@ func pageFileLexBegin(lexer *pageFileLexer) pageFileLexStateFunc {
 }
 
 var (
-	// pageFileLexKey extracts a Key.
+	// pageFileLexKey extracts a pageFileKey.
 	pageFileLexKey pageFileLexStateFunc
 
-	// pageFileLexKeyOpt extracts a Key's KeyOpt.
+	// pageFileLexKeyOpt extracts a pageFileKey's pageFileKeyOpt.
 	pageFileLexKeyOpt pageFileLexStateFunc
 )
 
 func init() {
-	// The two lexers for Key and KeyOpt are almost identical. Thus, the pageFileLexKeyOrKeyOptGenerator creates them.
-	// However, within the generator, the pageFileLexKeyOpt is referenced. This level of indirection is too much for the
-	// Go compiler. That's why this hacky hack is here.
+	// The two lexers for pageFileKey and pageFileKeyOpt are almost identical. Thus, the pageFileLexKeyOrKeyOptGenerator
+	// creates them. However, within the generator, the pageFileLexKeyOpt is referenced. This level of indirection is
+	// too much for the Go compiler. That's why this hacky hack is here.
 
-	pageFileLexKey = pageFileLexKeyOrKeyOptGenerator(Key)
-	pageFileLexKeyOpt = pageFileLexKeyOrKeyOptGenerator(KeyOpt)
+	pageFileLexKey = pageFileLexKeyOrKeyOptGenerator(pageFileKey)
+	pageFileLexKeyOpt = pageFileLexKeyOrKeyOptGenerator(pageFileKeyOpt)
 }
 
 // pageFileLexKeyOrKeyOptGenerator generates pageFileLexKey and pageFileLexKeyOpt.
@@ -100,7 +100,7 @@ func pageFileLexKeyOrKeyOptGenerator(t pageFileLexType) pageFileLexStateFunc {
 	}
 }
 
-// pageFileLexVal extracts a Key's Value.
+// pageFileLexVal extracts a pageFileKey's pageFileValue.
 func pageFileLexVal(lexer *pageFileLexer) pageFileLexStateFunc {
 	var field string
 	for {
@@ -110,7 +110,7 @@ func pageFileLexVal(lexer *pageFileLexer) pageFileLexStateFunc {
 		}
 
 		if r == '\n' {
-			return lexer.emit(Value, field, pageFileLexBegin)
+			return lexer.emit(pageFileValue, field, pageFileLexBegin)
 		}
 		field += string(r)
 	}
@@ -155,10 +155,10 @@ func (lexer *pageFileLexer) emit(t pageFileLexType, v string, succ pageFileLexSt
 
 // errorf emits an error back.
 func (lexer *pageFileLexer) errorf(format string, args ...interface{}) pageFileLexStateFunc {
-	return lexer.emit(Error, fmt.Sprintf(format, args...), nil)
+	return lexer.emit(pageFileError, fmt.Sprintf(format, args...), nil)
 }
 
-// eof emits an EOF back.
+// eof emits an pageFileEOF back.
 func (lexer *pageFileLexer) eof() pageFileLexStateFunc {
-	return lexer.emit(EOF, "", nil)
+	return lexer.emit(pageFileEOF, "", nil)
 }

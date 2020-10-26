@@ -9,52 +9,52 @@ import (
 func TestLexPageFileValid(t *testing.T) {
 	input1 := ""
 	items1 := []pageFileLexItem{
-		{EOF, ""},
+		{pageFileEOF, ""},
 	}
 
 	input2 := "version=pmwiki-2.1.0 urlencoded=1\ntext=Markup text\n"
 	items2 := []pageFileLexItem{
-		{Key, "version"},
-		{Value, "pmwiki-2.1.0 urlencoded=1"},
-		{Key, "text"},
-		{Value, "Markup text"},
-		{EOF, ""},
+		{pageFileKey, "version"},
+		{pageFileValue, "pmwiki-2.1.0 urlencoded=1"},
+		{pageFileKey, "text"},
+		{pageFileValue, "Markup text"},
+		{pageFileEOF, ""},
 	}
 
 	input3 := "version=pmwiki-2.1.0 ordered=1 urlencoded=1\ntext=This is a line.%0aThis is another.\nctime=1142030000\n"
 	items3 := []pageFileLexItem{
-		{Key, "version"},
-		{Value, "pmwiki-2.1.0 ordered=1 urlencoded=1"},
-		{Key, "text"},
-		{Value, "This is a line.%0aThis is another."},
-		{Key, "ctime"},
-		{Value, "1142030000"},
-		{EOF, ""},
+		{pageFileKey, "version"},
+		{pageFileValue, "pmwiki-2.1.0 ordered=1 urlencoded=1"},
+		{pageFileKey, "text"},
+		{pageFileValue, "This is a line.%0aThis is another."},
+		{pageFileKey, "ctime"},
+		{pageFileValue, "1142030000"},
+		{pageFileEOF, ""},
 	}
 
 	input4 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\ntext:foo=foo\n"
 	items4 := []pageFileLexItem{
-		{Key, "version"},
-		{Value, "pmwiki-2.1.0 urlencoded=1"},
-		{Key, "text"},
-		{Value, "text"},
-		{Key, "text"},
-		{KeyOpt, "foo"},
-		{Value, "foo"},
-		{EOF, ""},
+		{pageFileKey, "version"},
+		{pageFileValue, "pmwiki-2.1.0 urlencoded=1"},
+		{pageFileKey, "text"},
+		{pageFileValue, "text"},
+		{pageFileKey, "text"},
+		{pageFileKeyOpt, "foo"},
+		{pageFileValue, "foo"},
+		{pageFileEOF, ""},
 	}
 
 	input5 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\ntext:foo:bar=foo\n"
 	items5 := []pageFileLexItem{
-		{Key, "version"},
-		{Value, "pmwiki-2.1.0 urlencoded=1"},
-		{Key, "text"},
-		{Value, "text"},
-		{Key, "text"},
-		{KeyOpt, "foo"},
-		{KeyOpt, "bar"},
-		{Value, "foo"},
-		{EOF, ""},
+		{pageFileKey, "version"},
+		{pageFileValue, "pmwiki-2.1.0 urlencoded=1"},
+		{pageFileKey, "text"},
+		{pageFileValue, "text"},
+		{pageFileKey, "text"},
+		{pageFileKeyOpt, "foo"},
+		{pageFileKeyOpt, "bar"},
+		{pageFileValue, "foo"},
+		{pageFileEOF, ""},
 	}
 
 	tests := []struct {
@@ -90,7 +90,6 @@ func TestLexPageFileValid(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestLexPageFileInvalid(t *testing.T) {
@@ -109,7 +108,7 @@ func TestLexPageFileInvalid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for item := range lexPageFile(strings.NewReader(test.input)) {
-				if item.t == Error {
+				if item.t == pageFileError {
 					return
 				}
 			}

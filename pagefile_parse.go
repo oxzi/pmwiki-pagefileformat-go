@@ -33,9 +33,9 @@ func (parser *pageFileParser) nextType(lexType pageFileLexType, max int) (v stri
 	for i := 0; max <= 0 || i < max; i++ {
 		if item := parser.next(); item.t == lexType {
 			return item.v, nil
-		} else if item.t == EOF {
+		} else if item.t == pageFileEOF {
 			return "", io.EOF
-		} else if item.t == Error {
+		} else if item.t == pageFileError {
 			return "", fmt.Errorf(item.v)
 		}
 	}
@@ -64,11 +64,11 @@ func (parser *pageFileParser) errorf(format string, args ...interface{}) pageFil
 
 // pageFileParseVersion parses the initial version item.
 func pageFileParseVersion(parser *pageFileParser) pageFileParseStateFunc {
-	if err := parser.acceptItem(pageFileLexItem{Key, "version"}); err != nil {
+	if err := parser.acceptItem(pageFileLexItem{pageFileKey, "version"}); err != nil {
 		return parser.errorf("initial version expected, %w", err)
 	}
 
-	if version, err := parser.nextType(Value, 1); err != nil {
+	if version, err := parser.nextType(pageFileValue, 1); err != nil {
 		return parser.errorf("initial version expected, %w", err)
 	} else {
 		parser.urlencoded = strings.Contains(version, "urlencoded=1")
@@ -81,7 +81,7 @@ func pageFileParseVersion(parser *pageFileParser) pageFileParseStateFunc {
 // pageFileParseFields parses the other items.
 func pageFileParseFields(parser *pageFileParser) pageFileParseStateFunc {
 	for {
-		key, err := parser.nextType(Key, 0)
+		key, err := parser.nextType(pageFileKey, 0)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -94,10 +94,10 @@ func pageFileParseFields(parser *pageFileParser) pageFileParseStateFunc {
 	itemTokenLoop:
 		for item := parser.next(); ; item = parser.next() {
 			switch item.t {
-			case KeyOpt:
+			case pageFileKeyOpt:
 				opts = append(opts, item.v)
 
-			case Value:
+			case pageFileValue:
 				if parser.urlencoded {
 					if value, err = url.QueryUnescape(strings.ReplaceAll(item.v, "+", "%2b")); err != nil {
 						return parser.errorf("URL decoding value errored, %w", err)
@@ -190,7 +190,7 @@ func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) 
 		return nil
 	}
 
-	// Items in our interest are starting with the time as the first KeyOpt. Other items will be ignored.
+	// Items in our interest are starting with the time as the first pageFileKeyOpt. Other items will be ignored.
 	unixInt, unixErr := strconv.ParseInt(opts[0], 10, 64)
 	if unixErr != nil {
 		return nil
