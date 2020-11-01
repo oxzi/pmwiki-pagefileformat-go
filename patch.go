@@ -5,12 +5,12 @@ type patchType int
 const (
 	_ patchType = iota
 
-	// Addition of lines from a Patch.
-	Addition
-	// Deletion of lines from a Patch.
-	Deletion
-	// Change of lines from a Patch, combined Addition and Deletion.
-	Change
+	// addition of lines from a Patch.
+	addition
+	// deletion of lines from a Patch.
+	deletion
+	// change of lines from a Patch, combined addition and deletion.
+	change
 )
 
 type patchAction struct {

@@ -217,7 +217,7 @@ func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) 
 		}
 
 	case "diff":
-		if pfr.DiffAgainst != (time.Time{}) || pfr.Diff != "" {
+		if pfr.DiffAgainst != (time.Time{}) || len(pfr.Diff) > 0 {
 			return fmt.Errorf("diff field was already set")
 		}
 		if len(opts) < 2 {
@@ -228,7 +228,11 @@ func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) 
 		} else {
 			pfr.DiffAgainst = time.Unix(diffAgainstUnix, 0).UTC()
 		}
-		pfr.Diff = value
+		if patch, err := parsePatch(strings.ReplaceAll(value, "\\ No newline at end of file\n", "")); err != nil {
+			return fmt.Errorf("parsing diff errored, %w", err)
+		} else {
+			pfr.Diff = patch
+		}
 
 	default:
 		// unknown / unsupported item

@@ -103,13 +103,13 @@ func patchParseHeader(parser *patchParser) (succ patchParseStateFunc) {
 	} else {
 		switch mode {
 		case "a":
-			parser.nextPatch.mode = Addition
+			parser.nextPatch.mode = addition
 			succ = patchParseAddition
 		case "d":
-			parser.nextPatch.mode = Deletion
+			parser.nextPatch.mode = deletion
 			succ = patchParseDeletion
 		case "c":
-			parser.nextPatch.mode = Change
+			parser.nextPatch.mode = change
 			succ = patchParseDeletion
 		default:
 			return parser.errorf("invalid mode value %s", mode)
@@ -134,7 +134,7 @@ func patchParseAddition(parser *patchParser) patchParseStateFunc {
 	return patchParseStart
 }
 
-// patchParseDeletion parses deletion lines and might switch to patchParseAddition in case of a Change patchAction.
+// patchParseDeletion parses deletion lines and might switch to patchParseAddition in case of a change patchAction.
 func patchParseDeletion(parser *patchParser) patchParseStateFunc {
 	next := parser.next()
 	for ; next.t == patchDeletion; next = parser.next() {
@@ -142,15 +142,15 @@ func patchParseDeletion(parser *patchParser) patchParseStateFunc {
 	}
 
 	parser.backup(next)
-	if parser.nextPatch.mode == Change && next.t == patchAddition {
+	if parser.nextPatch.mode == change && next.t == patchAddition {
 		return patchParseAddition
 	} else {
 		return patchParseStart
 	}
 }
 
-// ParsePatch parses a Patch from an input string.
-func ParsePatch(data string) (Patch, error) {
+// parsePatch parses a Patch from an input string.
+func parsePatch(data string) (Patch, error) {
 	parser := &patchParser{lexItems: lexPatch(data)}
 	for state := patchParseStart; state != nil; state = state(parser) {
 	}

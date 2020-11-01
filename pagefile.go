@@ -12,7 +12,7 @@ type PageFileRevision struct {
 	Author string
 	Host   net.IP
 
-	Diff        string
+	Diff        Patch
 	DiffAgainst time.Time
 }
 

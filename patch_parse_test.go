@@ -10,24 +10,24 @@ func TestParsePatchValid(t *testing.T) {
 
 	input2 := "0a1\n> addition\n"
 	check2 := func(patch Patch) bool {
-		return len(patch) == 1 && patch[0].mode == Addition && patch[0].startLine == 0 &&
+		return len(patch) == 1 && patch[0].mode == addition && patch[0].startLine == 0 &&
 			len(patch[0].additionLines) == 1 && patch[0].additionLines[0] == "addition"
 	}
 
 	input3 := "0a1,3\n> multiline\n> addition\n> yay\n"
 	check3 := func(patch Patch) bool {
-		return len(patch) == 1 && patch[0].mode == Addition && patch[0].startLine == 0 && len(patch[0].additionLines) == 3
+		return len(patch) == 1 && patch[0].mode == addition && patch[0].startLine == 0 && len(patch[0].additionLines) == 3
 	}
 
 	input4 := "23d23\n< gone\n"
 	check4 := func(patch Patch) bool {
-		return len(patch) == 1 && patch[0].mode == Deletion && patch[0].startLine == 23 &&
+		return len(patch) == 1 && patch[0].mode == deletion && patch[0].startLine == 23 &&
 			len(patch[0].deletionLines) == 1 && patch[0].deletionLines[0] == "gone"
 	}
 
 	input5 := "5c5\n< foo\n---\n> bar\n"
 	check5 := func(patch Patch) bool {
-		return len(patch) == 1 && patch[0].mode == Change && patch[0].startLine == 5 &&
+		return len(patch) == 1 && patch[0].mode == change && patch[0].startLine == 5 &&
 			len(patch[0].deletionLines) == 1 && patch[0].deletionLines[0] == "foo" &&
 			len(patch[0].additionLines) == 1 && patch[0].additionLines[0] == "bar"
 	}
@@ -40,10 +40,10 @@ func TestParsePatchValid(t *testing.T) {
 		"> This paragraph contains\n> important new additions\n> to this document.\n"
 	check6 := func(patch Patch) bool {
 		return len(patch) == 4 &&
-			patch[0].mode == Addition && patch[0].startLine == 0 && len(patch[0].additionLines) == 6 &&
-			patch[1].mode == Deletion && patch[1].startLine == 11 && len(patch[1].deletionLines) == 5 &&
-			patch[2].mode == Change && patch[2].startLine == 17 && len(patch[2].additionLines) == 1 && len(patch[2].deletionLines) == 1 &&
-			patch[3].mode == Addition && patch[3].startLine == 24 && len(patch[3].additionLines) == 4
+			patch[0].mode == addition && patch[0].startLine == 0 && len(patch[0].additionLines) == 6 &&
+			patch[1].mode == deletion && patch[1].startLine == 11 && len(patch[1].deletionLines) == 5 &&
+			patch[2].mode == change && patch[2].startLine == 17 && len(patch[2].additionLines) == 1 && len(patch[2].deletionLines) == 1 &&
+			patch[3].mode == addition && patch[3].startLine == 24 && len(patch[3].additionLines) == 4
 	}
 
 	tests := []struct {
@@ -61,7 +61,7 @@ func TestParsePatchValid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if patch, err := ParsePatch(test.input); err != nil {
+			if patch, err := parsePatch(test.input); err != nil {
 				t.Fatal(err)
 			} else if !test.check(patch) {
 				t.Fatal("check failed")
@@ -90,7 +90,7 @@ func TestParsePatchInvalid(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if patch, err := ParsePatch(test.input); err == nil {
+			if patch, err := parsePatch(test.input); err == nil {
 				t.Fatalf("did not fail, produced %v", patch)
 			}
 		})

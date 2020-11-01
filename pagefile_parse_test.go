@@ -28,20 +28,19 @@ func TestParsePageFileValid(t *testing.T) {
 	input4 := "version=pmwiki-2.1.0 urlencoded=1\nrandom=data\n"
 	check4 := func(PageFile) bool { return true }
 
-	input5 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\nhost:42=::1\ndiff:42:23:=legit diff\n"
+	input5 := "version=pmwiki-2.1.0 urlencoded=1\ntext=text\nhost:42=::1\ndiff:42:23:=0a1%0a> add%0a\n"
 	check5 := func(pf PageFile) bool {
 		pfrUnix := time.Unix(42, 0).UTC()
 		if pfr, ok := pf.Revs[pfrUnix]; !ok {
 			return false
 		} else {
 			return pfr.Host.Equal(net.ParseIP("::1")) &&
-				pfr.DiffAgainst.Equal(time.Unix(23, 0).UTC()) &&
-				pfr.Diff == "legit diff"
+				pfr.DiffAgainst.Equal(time.Unix(23, 0).UTC())
 		}
 	}
 
 	input6 := "version=pmwiki-2.1.0 urlencoded=1\nauthor=user\nhost=2001:db8::1\nname=Main.Test\nrev=42\ntime=1603541891\ntext=%0ahello%0aworld\n" +
-		"author:10=foo\nhost:10=::1\ndiff:10:5:=diff%3cb\nauthor:5=bar\nhost:5=::2\ndiff:5:3:=diff%25a\n"
+		"author:10=foo\nhost:10=::1\ndiff:10:5:=0a1%0a> A%0a\nauthor:5=bar\nhost:5=::2\ndiff:5:3:=1d2%0a%3c B%0a\n"
 	check6 := func(pf PageFile) bool {
 		mainCheck := pf.Version == "pmwiki-2.1.0 urlencoded=1" &&
 			pf.Author == "user" &&
@@ -66,8 +65,7 @@ func TestParsePageFileValid(t *testing.T) {
 		} else {
 			chk := pfr.Author == "foo" &&
 				pfr.Host.Equal(net.ParseIP("::1")) &&
-				pfr.DiffAgainst.Equal(pfrA) &&
-				pfr.Diff == "diff<b"
+				pfr.DiffAgainst.Equal(pfrA)
 			if !chk {
 				return false
 			}
@@ -78,8 +76,7 @@ func TestParsePageFileValid(t *testing.T) {
 		} else {
 			return pfr.Author == "bar" &&
 				pfr.Host.Equal(net.ParseIP("::2")) &&
-				pfr.DiffAgainst.Equal(time.Unix(3, 0).UTC()) &&
-				pfr.Diff == "diff%a"
+				pfr.DiffAgainst.Equal(time.Unix(3, 0).UTC())
 		}
 	}
 
@@ -147,6 +144,7 @@ func TestParsePageFileInvalid(t *testing.T) {
 		{"rev, double diff", "version=pmwiki-2.1.0 urlencoded=1\ndiff:42:23:=foo\ndiff:42:23:=bar\n"},
 		{"rev, diff less keyopts", "version=pmwiki-2.1.0 urlencoded=1\ndiff:42=foo\n"},
 		{"rev, diff invalid against", "version=pmwiki-2.1.0 urlencoded=1\ndiff:42:old:=foo\n"},
+		{"rev, diff invalid", "version=pmwiki-2.1.0 urlencoded=1\ndiff:42:23:=AAAAAAAAAA\n"},
 	}
 
 	for _, test := range tests {
