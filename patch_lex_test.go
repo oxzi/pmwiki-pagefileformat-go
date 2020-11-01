@@ -162,7 +162,7 @@ func TestLexPatchInvalid(t *testing.T) {
 		{"invalid addition", ">A"},
 		{"invalid deletion", "<A"},
 		{"addition early end", "> addition"},
-		{"deletion early end", "< addition"},
+		{"deletion early end", "< deletion"},
 		{"double dash", "--"},
 	}
 

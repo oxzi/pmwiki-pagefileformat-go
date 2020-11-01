@@ -14,7 +14,7 @@ const (
 )
 
 type patchAction struct {
-	action        patchType
+	mode          patchType
 	startLine     int
 	additionLines []string
 	deletionLines []string
