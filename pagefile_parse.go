@@ -198,6 +198,7 @@ func pageFileParseRev(parser *pageFileParser, key, value string, opts []string) 
 
 	unix := time.Unix(unixInt, 0).UTC()
 	pfr := parser.pf.Revs[unix]
+	pfr.Time = unix
 
 	switch key {
 	case "author":
