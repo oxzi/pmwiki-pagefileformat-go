@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // patchType describes the change of a patchAction.
@@ -32,7 +33,11 @@ type patchAction struct {
 func (patchAction patchAction) apply(scanner *bufio.Scanner, out io.Writer) (consumed int, err error) {
 	if patchAction.mode == deletion || patchAction.mode == change {
 		for consumed = 0; consumed < len(patchAction.deletionLines) && scanner.Scan(); consumed++ {
-			if input := scanner.Text(); input != patchAction.deletionLines[consumed] {
+			// Sometimes PmWiki truncates whitespaces from patches, because oh̨ m͞y gǫd ͜p̀mwi͝ki s̡̧͝t͏a̢̧̛h̀p̕ ͝w͏̸̵h͢a͢͞t̴̨̀ a̧̧re ̢͠y̨͠o̧͏ư̴̴ d͡o̴i͜ng̕?̸̕͞!̡͠!
+			input := scanner.Text()
+			expected := patchAction.deletionLines[consumed]
+
+			if input != expected && input != strings.TrimSpace(expected) {
 				err = fmt.Errorf("patch:%d expected \"%s\", got \"%s\"", consumed, patchAction.deletionLines[consumed], input)
 				return
 			}
