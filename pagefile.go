@@ -7,9 +7,7 @@ import (
 	"time"
 )
 
-// author:${DATE_NOW}
-// host:${DATE_NOW}
-// diff:${DATE_NOW}:${DATE_PREV}:${DIFF_CLASS}
+// PageFileRevision describes a PageFile internal diff.
 type PageFileRevision struct {
 	Time   time.Time
 	Author string
@@ -19,6 +17,7 @@ type PageFileRevision struct {
 	DiffAgainst time.Time
 }
 
+// PageFile describes a PmWiki page including its history.
 type PageFile struct {
 	Version string
 	Name    string
@@ -30,10 +29,27 @@ type PageFile struct {
 	Rev    int
 
 	Revs map[time.Time]PageFileRevision
+
+	Deleted time.Time
 }
 
 // Revisions calls a function with a "view" copy of each revision of this PageFile.
+//
+// An error is returned when creating the successive revision fails. However, multiple previous revisions could be
+// generated previously.
 func (pageFile PageFile) Revisions(callback func(view PageFile)) error {
+	if pageFile.Deleted != (time.Time{}) {
+		defer callback(PageFile{
+			Version: pageFile.Version,
+			Name:    pageFile.Name,
+			Time:    pageFile.Deleted,
+			Text:    "",
+			Author:  "", // the real author is written in the RecentChanges file
+			Host:    net.ParseIP("::1"),
+			Rev:     pageFile.Rev + 1,
+		})
+	}
+
 	if len(pageFile.Revs) == 0 {
 		callback(pageFile)
 		return nil
