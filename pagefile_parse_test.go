@@ -92,6 +92,11 @@ func TestParsePageFileValid(t *testing.T) {
 	input10 := "version=pmwiki-2.1.0\ntext=foo%0abar\n"
 	check10 := func(pf PageFile) bool { return pf.Text == "foo%0abar" }
 
+	input11 := "version=pmwiki-2.1.0\ntext=foo\nauthor:1527448031=user\ndiff:1527448031:1527446923:=\nhost:1527448031=fc80::1\n"
+	check11 := func(pf PageFile) bool {
+		return len(pf.Revs) == 1 && pf.Revs[time.Unix(1527448031, 0).UTC()].DiffAgainst != (time.Time{})
+	}
+
 	tests := []struct {
 		name  string
 		input string
@@ -107,6 +112,7 @@ func TestParsePageFileValid(t *testing.T) {
 		{"ignore non supported revision key", input8, check8},
 		{"check URL encoding", input9, check9},
 		{"check disabled URL encoding", input10, check10},
+		{"empty diff", input11, check11},
 	}
 
 	for _, test := range tests {

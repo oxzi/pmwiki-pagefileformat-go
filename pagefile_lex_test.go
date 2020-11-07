@@ -57,6 +57,22 @@ func TestLexPageFileValid(t *testing.T) {
 		{pageFileEOF, ""},
 	}
 
+	input6 := "author:1527448031=user\ndiff:1527448031:1527446923:=\nhost:1527448031=fc80::1\n"
+	items6 := []pageFileLexItem{
+		{pageFileKey, "author"},
+		{pageFileKeyOpt, "1527448031"},
+		{pageFileValue, "user"},
+		{pageFileKey, "diff"},
+		{pageFileKeyOpt, "1527448031"},
+		{pageFileKeyOpt, "1527446923"},
+		{pageFileKeyOpt, ""},
+		{pageFileValue, ""},
+		{pageFileKey, "host"},
+		{pageFileKeyOpt, "1527448031"},
+		{pageFileValue, "fc80::1"},
+		{pageFileEOF, ""},
+	}
+
 	tests := []struct {
 		name  string
 		input string
@@ -67,6 +83,7 @@ func TestLexPageFileValid(t *testing.T) {
 		{"multiline", input3, items3},
 		{"key options", input4, items4},
 		{"multiple key options", input5, items5},
+		{"empty diff", input6, items6},
 	}
 
 	for _, test := range tests {
